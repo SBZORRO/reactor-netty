@@ -83,7 +83,7 @@ import reactor.netty.channel.ChannelOperations;
 import reactor.netty.http.HttpOperations;
 import reactor.netty.http.HttpResources;
 import reactor.netty.resources.LoopResources;
-import reactor.netty.tcp.InetSocketAddressUtil;
+import reactor.netty.transport.AddressUtils;
 import reactor.netty.tcp.ProxyProvider;
 import reactor.netty.tcp.SslProvider;
 import reactor.netty.tcp.TcpClient;
@@ -526,7 +526,7 @@ final class HttpClientConnect extends HttpClient {
 			SocketAddress address = toURI.getRemoteAddress();
 			if (proxyProvider != null && !proxyProvider.shouldProxy(address) &&
 					address instanceof InetSocketAddress) {
-				address = InetSocketAddressUtil.replaceWithResolved((InetSocketAddress) address);
+				address = AddressUtils.replaceWithResolved((InetSocketAddress) address);
 			}
 
 			return address;
@@ -1007,5 +1007,5 @@ final class HttpClientConnect extends HttpClient {
 
 
 	static final BiFunction<String, Integer, InetSocketAddress> URI_ADDRESS_MAPPER =
-			InetSocketAddressUtil::createUnresolved;
+			AddressUtils::createUnresolved;
 }
