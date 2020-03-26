@@ -41,7 +41,7 @@ public class ChannelMetricsHandler extends ChannelDuplexHandler {
 	final boolean onServer;
 
 
-	ChannelMetricsHandler(ChannelMetricsRecorder recorder, @Nullable SocketAddress remoteAddress, boolean onServer) {
+	public ChannelMetricsHandler(ChannelMetricsRecorder recorder, @Nullable SocketAddress remoteAddress, boolean onServer) {
 		this.recorder = recorder;
 		this.remoteAddress = remoteAddress;
 		this.onServer = onServer;

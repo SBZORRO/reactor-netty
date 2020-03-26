@@ -20,6 +20,7 @@ import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import javax.annotation.Nullable;
 
@@ -150,5 +151,29 @@ public final class AddressUtils {
 			return new InetSocketAddress(inetAddressForIpString, port);
 		}
 		return null;
+	}
+
+	static SocketAddress updateHost(@Nullable SocketAddress address, String host) {
+		if (!(address instanceof InetSocketAddress)) {
+			return createUnresolved(host, 0);
+		}
+
+		InetSocketAddress inet = (InetSocketAddress) address;
+
+		return createUnresolved(host, inet.getPort());
+	}
+
+	static SocketAddress updatePort(@Nullable SocketAddress address, int port) {
+		if (!(address instanceof InetSocketAddress)) {
+			return createUnresolved(NetUtil.LOCALHOST.getHostAddress(), port);
+		}
+
+		InetSocketAddress inet = (InetSocketAddress) address;
+
+		InetAddress addr = inet.getAddress();
+
+		String host = addr == null ? inet.getHostName() : addr.getHostAddress();
+
+		return createUnresolved(host, port);
 	}
 }

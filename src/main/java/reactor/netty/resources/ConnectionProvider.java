@@ -21,6 +21,8 @@ import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 import reactor.netty.ReactorNetty;
+import reactor.netty.transport.TransportClientConfig;
+import reactor.netty.transport.TransportConfig;
 import reactor.pool.InstrumentedPool;
 import reactor.pool.Pool;
 import reactor.pool.PoolBuilder;
@@ -163,6 +165,10 @@ public interface ConnectionProvider extends Disposable {
 	 * @return an existing or new {@link Mono} of {@link Connection}
 	 */
 	Mono<? extends Connection> acquire(Bootstrap bootstrap);
+
+	default <CONF extends TransportConfig, CONN extends Connection> Mono<CONN> acquire(TransportClientConfig<CONF, CONN> config) {
+		return Mono.empty();
+	}
 
 
 	default void disposeWhen(@NonNull SocketAddress address) {

@@ -40,15 +40,15 @@ import static reactor.netty.Metrics.USED_HEAP_MEMORY;
  * @author Violeta Georgieva
  * @since 0.9
  */
-final class ByteBufAllocatorMetrics {
-	static final ByteBufAllocatorMetrics INSTANCE = new ByteBufAllocatorMetrics();
+public final class ByteBufAllocatorMetrics {
+	public static final ByteBufAllocatorMetrics INSTANCE = new ByteBufAllocatorMetrics();
 
 	final ConcurrentMap<String, ByteBufAllocatorMetric> cache = PlatformDependent.newConcurrentHashMap();
 
 	private ByteBufAllocatorMetrics() {
 	}
 
-	void registerMetrics(String allocType, ByteBufAllocatorMetric metrics) {
+	public void registerMetrics(String allocType, ByteBufAllocatorMetric metrics) {
 		cache.computeIfAbsent(metrics.hashCode() + "", key -> {
 			String[] tags = new String[] {ID, key, TYPE, allocType};
 
