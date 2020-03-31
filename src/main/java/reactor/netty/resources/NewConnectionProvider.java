@@ -23,8 +23,10 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelInitializer;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -33,6 +35,9 @@ import reactor.netty.Connection;
 import reactor.netty.ConnectionObserver;
 import reactor.netty.channel.BootstrapHandlers;
 import reactor.netty.channel.ChannelOperations;
+import reactor.netty.transport.TransportClientConfig;
+import reactor.netty.transport.TransportConfig;
+import reactor.netty.transport.TransportConnector;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.context.Context;
@@ -78,6 +83,41 @@ final class NewConnectionProvider implements ConnectionProvider {
 			DisposableConnect disposableConnect = new DisposableConnect(sink, f, bootstrap);
 			f.addListener(disposableConnect);
 			sink.onCancel(disposableConnect);
+		});
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <CONF extends TransportConfig, CONN extends Connection> Mono<CONN> acquire(TransportClientConfig<CONF, CONN> config) {
+		return Mono.create(sink -> {
+			SocketAddress remote = config.remoteAddress();
+			if (remote instanceof Supplier) {
+				remote = Objects.requireNonNull(((Supplier<? extends SocketAddress>) remote).get(),
+						"Remote Address supplier returned null");
+			}
+
+			ChannelInitializer<Channel> channelInitializer =
+					config.channelInitializer(new NewConnectionObserver((MonoSink<Connection>) sink, config.connectionObserver()), remote);
+			TransportConnector.connect(config, remote, config.resolver(), channelInitializer)
+			                  .subscribe(
+			                          channel -> {
+			                              sink.onCancel(channel::close);
+			                              if (log.isDebugEnabled()) {
+			                                  log.debug(format(channel, "Connected new channel"));
+			                              }
+			                          },
+			                          t -> {
+			                              if (t instanceof BindException ||
+			                                      // With epoll/kqueue transport it is
+			                                      // io.netty.channel.unix.Errors$NativeIoException: bind(..) failed: Address already in use
+			                                      (t instanceof IOException && t.getMessage() != null &&
+			                                          t.getMessage().contains("Address already in use"))) {
+			                                  sink.error(ChannelBindException.fail(config.localAddress(), null)); // TODO local address NULL
+			                              }
+			                              else {
+			                                  sink.error(t);
+			                              }
+			                          });
 		});
 	}
 
